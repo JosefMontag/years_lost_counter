@@ -24,11 +24,11 @@ Years lost are computed from the actuarial tables published by the Czech Statist
 
 Denote $q_x$ the probability of a person dying at age $x$ conditional on being alive at $x-1$ from the actuarial tables. A person who died at the age $x-1$, had she not died at that age, would survive $y$ more years, dying at age $x - 1 + y$. Let $\bm{y} = (1,  \ldots, 104 - x -1)$ be the vector of potential years lost (104 is the maximum age of death in the actuarial tables, which determines the maximum possible years lost).
 Let $\bm{d} = (q_x, d_2, \ldots, d_{104 - x - 1})$ be the vector probabilities of dying at ages $x$ to 104, where the individual $d$'s are computed as
-![formula](https://render.githubusercontent.com/render/math?math=
+<img src="https://render.githubusercontent.com/render/math?math=
 \begin{align*}
 d_y &= \frac{\hat{d_y}}{\sum{\hat{d_y}}}, \qquad \text{where} \\
 \hat{d}_y &= q_{x - 1 + y}\prod_{i =0}^{y - 1}{(1 -q_{x + i})},
-\end{align*})
+\end{align*}">
 where the product gives the probability of being alive at $x - 1 + y$. Note that the probability of a person dying at some point is equal to one but $\sum \hat{d_y}$ is not guaranteed to add up to one. To make sure $\sum d_y = 1$, we normalize $\hat{d_y}$'s by dividing by $\sum\hat{d_y}$. Her years lost due to dying at $x - 1$ are then
 \begin{align*}
 L = \bm{y}' \bm{d}.
