@@ -53,16 +53,7 @@ population <- bind_rows(mtab_f,mtab_m) %>%
 ui <- dashboardPage(
     dashboardHeader(
         title = "Roky života ztracené kvůli úmrtím na COVID-19 v České republice",
-        titleWidth = "700",
-        dropdownMenu(type = "notifications", badgeStatus = "warning", icon = icon("users"),
-                     headerText = "Autoři a kontakty",
-                     notificationItem(icon = icon("user"), status = "info",
-                                      "Štěpán Mikula"
-                     ),
-                     notificationItem(icon = icon("user"), status = "info",
-                                      "Josef Montag"
-                     )
-        )
+        titleWidth = "700"
     ),
     dashboardSidebar(
         disable = TRUE,
