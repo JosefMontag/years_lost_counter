@@ -28,7 +28,7 @@ of years lost due to COVID-19 deaths in the Czech Republic.
 * The app can be easily adapted to data from other countries or to other diseases.
 * The code can be freely used, but proper credits should be given.
 
-## Authors and feedbac
+## Authors and feedback
 
 Štěpán Mikula, PhD 
 Department of Economics 
@@ -43,6 +43,6 @@ Charles University
 We greatly appreciate any feedback
 
 * Contact Štěpán Mikula at stepan.mikula@gmail.com with queries or feedback regarding the web app.
-* Contact Josef Montag at josef.montag@gmail.com with queries or feedback regarding the risk group computation.
+* Contact Josef Montag at josef.montag@gmail.com with queries or feedback regarding the computation of the risk group-specific years lost.
 
 
