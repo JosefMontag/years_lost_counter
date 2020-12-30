@@ -44,7 +44,7 @@ We greatly appreciate any feedback.
 
 With queries or feedback regarding:
 
-* the web app contact Štěpán Mikula at stepan.mikula@gmail.com.
+* the web app contact Štěpán Mikula at stepan.mikula@econ.muni.cz.
 * the computation of risk group-specific years lost josef.montag@gmail.com.
 
 
