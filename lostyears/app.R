@@ -3,20 +3,21 @@ library(shinydashboard)
 library(tidyverse)
 library(lemon)
 library(grid)
+library(fresh)
 
 ### Read data // to be replaced by reading from a remote source
 lost_years <- read_csv("https://raw.github.com/JosefMontag/years_lost_counter/main/lost_years_by_risk_group.csv")
 uzis_data <- read_csv("https://raw.github.com/JosefMontag/years_lost_counter/main/Input_data/covid_cases_and_deaths.csv")
 
 uzis_data <- uzis_data %>%
-    separate(vek_kat, c("died.at.age","agec2"), convert = TRUE, remove = FALSE) %>%
-    mutate(
-        died.at.age = floor(died.at.age + 2.5) %>% as.integer(),
-        gender = ifelse(pohlavi == "M","Male","Female")
-    ) %>%
-    select(-pohlavi,-agec2) %>%
-    mutate(umrti = ifelse(!is.na(tyden_umrti),1,NA)) %>%
-    rename(death.date = tyden_umrti)
+  separate(vek_kat, c("died.at.age","agec2"), convert = TRUE, remove = FALSE) %>%
+  mutate(
+    died.at.age = floor(died.at.age + 2.5) %>% as.integer(),
+    gender = ifelse(pohlavi == "M","Male","Female")
+  ) %>%
+  select(-pohlavi,-agec2) %>%
+  mutate(umrti = ifelse(!is.na(tyden_umrti),1,NA)) %>%
+  rename(death.date = tyden_umrti)
 
 uzis_data_all <- uzis_data
 uzis_data <- uzis_data %>% filter(umrti == 1)
@@ -26,767 +27,745 @@ mtab_m <- read_csv("https://raw.github.com/JosefMontag/years_lost_counter/main/I
 mtab_f <- read_csv("https://raw.github.com/JosefMontag/years_lost_counter/main/Input_data/UT_Kannisto_2019Z.csv") %>% mutate(gender = "Female")
 
 population <- bind_rows(mtab_f,mtab_m) %>%
-    filter(age >= 10) %>%
-    filter(age < 105) %>%
-    mutate(
-        age = cut(age,
-                      breaks = seq(
-                          from = 10, to = 105, by = 5
-                      ),
-                      labels = seq(
-                          from = 10, to = 100, by = 5
-                      ),
-                      include.lowest = TRUE,
-                      right = FALSE
-                      ) %>% as.character()
-    ) %>%
-    group_by(gender,age) %>%
-    summarise(
-        population = sum(Px, na.rm = TRUE),
-        .groups = "drop"
-    ) %>%
-    mutate(
-        age = as.integer(age) + 2
-    )
+  filter(age >= 10) %>%
+  filter(age < 105) %>%
+  mutate(
+    age = cut(age,
+              breaks = seq(
+                from = 10, to = 105, by = 5
+              ),
+              labels = seq(
+                from = 10, to = 100, by = 5
+              ),
+              include.lowest = TRUE,
+              right = FALSE
+    ) %>% as.character()
+  ) %>%
+  group_by(gender,age) %>%
+  summarise(
+    population = sum(Px, na.rm = TRUE),
+    .groups = "drop"
+  ) %>%
+  mutate(
+    age = as.integer(age) + 2
+  )
 
 
 ui <- dashboardPage(
-    dashboardHeader(
-        title = "Odhady ztracených let života v souvislosti s COVID-19 v ČR",
-        titleWidth = "700"
-    ),
-    dashboardSidebar(
-        disable = TRUE,
-        collapsed = FALSE,
-        width = 600
-    ),
-    dashboardBody(
-      fluidRow(
-        column(4,
-               box(
-                 p("Nastavení parametru \"Riziková skupina\" určuje v kalkulaci ztracených let předpoklad o tom, kdo umírá na COVID-19. Nižší hodnota znamená, že
+  dashboardHeader(
+    title = "Odhady ztracených let života v souvislosti s COVID-19 v ČR",
+    titleWidth = "700"
+  ),
+  dashboardSidebar(
+    disable = TRUE,
+    collapsed = FALSE,
+    width = 600
+  ),
+  dashboardBody(
+    tags$style(),
+    fluidRow(
+      column(4,
+             box(
+               p("Nastavení parametru \"Riziková skupina\" určuje v kalkulaci ztracených let předpoklad o tom, kdo umírá na COVID-19. Nižší hodnota znamená, že
                                    na COVID-19 umírají nejrizikovější skupiny obyvatel, které mají, bez ohledu na COVID-19, nejnižší naději na dožití. Vyšší hodnoty naopak
                                    znamenají, že na COVID-19 umírají lidé napříč populací."),
-                 sliderInput(
-                   "risk_group",
-                   "Riziková skupina (%):",
-                   min = 0,
-                   max = 100,
-                   value = 100,
-                   width = '100%'
-                 ),
-                 p(
-                   strong("Aplikace nemá žádné \"správné\" ani \"doporučené\" nastavení.")
-                 ),
-                 width = 12,
-                 title = "Vymezení rizikové skupiny",
-                 solidHeader = TRUE,
-                 status = "warning"
-               )
-        ),
-        column(4,
-               box(
-                 valueBoxOutput("mean_total", width = 12),
-                 valueBoxOutput("male", width = 6),
-                 valueBoxOutput("female", width = 6),
-                 title = "Průměrný počet ztracených let života při úmrtí v rámci vymezené rizikové skupiny",
-                 solidHeader = TRUE,
-                 status = "primary",
-                 width = 12
+               sliderInput(
+                 "risk_group",
+                 "Riziková skupina (%):",
+                 min = 0,
+                 max = 100,
+                 value = 100,
+                 width = '100%'
                ),
-        ),
-        column(4,
-               box(
-                 valueBoxOutput("years_total", width = 12),
-                 valueBoxOutput("male_total", width = 6),
-                 valueBoxOutput("female_total", width = 6),
-                 title = "Celkový počet ztracených let života při úmrtí v rámci vymezené rizikové skupiny",
-                 solidHeader = TRUE,
-                 status = "primary",
-                 width = 12
+               p(
+                 strong("Aplikace nemá žádné \"správné\" ani \"doporučené\" nastavení.")
                ),
-        )
+               width = 12,
+               title = "Vymezení rizikové skupiny",
+               solidHeader = TRUE,
+               status = "warning"
+             )
       ),
-      fluidRow(
-        column(4,
-               box(
-                 plotOutput("lostyears"),
-                 title = "Počet ztracených let života při úmrtí",
-                 solidHeader = TRUE,
-                 width = 12,
-                 status = "primary"
-               )
-        ),
-        column(4,
-               box(
-                 plotOutput("lostyears_mean_gender"),
-                 title = "Průměrný počet ztracených let života při úmrtí podle pohlaví",
-                 solidHeader = TRUE,
-                 width = 12,
-                 status = "primary"
-               )
-        ),
-        column(4,
-               box(
-                 plotOutput("lostyears_total_gender"),
-                 title = "Celkový počet ztracených let při úmrtí podle pohlaví",
-                 solidHeader = TRUE,
-                 width = 12,
-                 status = "primary"
-               )
-        )
+      column(4,
+             box(
+               valueBoxOutput("mean_total", width = 12),
+               valueBoxOutput("male", width = 6),
+               valueBoxOutput("female", width = 6),
+               title = "Průměrný počet ztracených let života při úmrtí v rámci vymezené rizikové skupiny",
+               solidHeader = TRUE,
+               status = "primary",
+               width = 12
+             ),
       ),
-      fluidRow(
-        column(4,
+      column(4,
+             box(
+               valueBoxOutput("years_total", width = 12),
+               valueBoxOutput("male_total", width = 6),
+               valueBoxOutput("female_total", width = 6),
+               title = "Celkový počet ztracených let života při úmrtí v rámci vymezené rizikové skupiny",
+               solidHeader = TRUE,
+               status = "primary",
+               width = 12
+             ),
+      )
+    ),
+    fluidRow(
+      column(4,
+             box(
+               plotOutput("lostyears"),
+               title = "Počet ztracených let života při úmrtí",
+               solidHeader = TRUE,
+               width = 12,
+               status = "primary"
+             )
+      ),
+      column(4,
+             box(
+               plotOutput("lostyears_mean_gender"),
+               title = "Průměrný počet ztracených let života při úmrtí podle pohlaví",
+               solidHeader = TRUE,
+               width = 12,
+               status = "primary"
+             )
+      ),
+      column(4,
+             box(
+               plotOutput("lostyears_total_gender"),
+               title = "Celkový počet ztracených let při úmrtí podle pohlaví",
+               solidHeader = TRUE,
+               width = 12,
+               status = "primary"
+             )
+      )
+    ),
+    fluidRow(
+      column(4,
 
-               box(
-                 plotOutput("risk_group"),
-                 title = "Vymezená riziková skupina v populaci ČR",
-                 solidHeader = TRUE,
-                 width = 12,
-                 status = "info"
-               ),
-               box(
-                 plotOutput("COVID_demog"),
-                 title = "Hospitalizace a úmrtí podle věku a pohlaví",
-                 solidHeader = TRUE,
-                 width = 12,
-                 status = "info"
-               )
-        ),
-        column(
-          5,
-          box(
-            p(
-              "Každé úmrtí zkracuje život. Tato aplikace počítá odhady ztracených let života
+             box(
+               plotOutput("risk_group"),
+               title = "Vymezená riziková skupina v populaci ČR",
+               solidHeader = TRUE,
+               width = 12,
+               status = "info"
+             ),
+             box(
+               plotOutput("COVID_demog"),
+               title = "Hospitalizace a úmrtí podle věku a pohlaví",
+               solidHeader = TRUE,
+               width = 12,
+               status = "info"
+             )
+      ),
+      column(
+        5,
+        box(
+          p(
+            "Každé úmrtí zkracuje život. Tato aplikace počítá odhady ztracených let života
                                      v důsledku úmrtí, přičemž umožňuje explicitně specifikovat ohroženou část populace (\"rizikovou skupinu\")."
-            ),
-            p("Výstupem aplikace je jednak hypotetický počet let, kterých by se průměrný jedinec v dané
+          ),
+          p("Výstupem aplikace je jednak hypotetický počet let, kterých by se průměrný jedinec v dané
                                  rizikové skupině dožil, pokud by neumřel. Tyto hodnoty jsou použity pro
                                  výpočet odhadu průměrných a celkových ztracených let života v důsledku úmrtí na
                                  onemocnění COVID-19. Aplikace současně umožňuje testovat, jak tento předpoklad o
             rizikové skupině ovlivňuje výsledné odhady ztracených let života."),
-            h3("Riziková skupina"),
-            withMathJax(p("Rizikové skupiny jsou odhadnuty na základě Úmrtnostních tabulek a jejich
+          h3("Riziková skupina"),
+          withMathJax(p("Rizikové skupiny jsou odhadnuty na základě Úmrtnostních tabulek a jejich
                                    interpretace je následující: Uvažujme člověka, který umřel ve věku \\(X\\).
                                    Pokud by v tomto věku nezemřel, potom by zemřel v budoucnu ve věku \\(Y\\).
                                    Rozdíl \\(Y - X\\) představuje ztracené roky života.")),
-            withMathJax(p("Ztracené roky života se mezi jednotlivci liší a \\(Y\\) je z definice nepozorovatelné. Proto ho
+          withMathJax(p("Ztracené roky života se mezi jednotlivci liší a \\(Y\\) je z definice nepozorovatelné. Proto ho
                                    musíme odhadovat z agregovaných dat. Pokud by se zemřelý nijak
                                   systematicky nelišil od ostatních lidí v populaci, potom by délka jeho života odpovídala střední délce života přešivší
                                   populace ze stejné věkové kohorty (tj. kolika let se v průměru
                                   dožijí všichni vrstevníci, kteří nezemřeli ve věku \\(X\\)), nebo-li \\(e_X\\).")),
-            withMathJax(p("Předpoklad, že se zemřelí nijak neliší od zbytku kohorty, je však specifický a ne nutně
+          withMathJax(p("Předpoklad, že se zemřelí nijak neliší od zbytku kohorty, je však specifický a ne nutně
                                   realistický. Mohou například pocházet z rizikovější skupiny v rámci dané kohorty a jejich
                                   průměrná očekávaná délka života \\(e_X'\\) je tedy nižší než \\(e_X\\). To implikuje nižší počet
                                   let ztracených v důsledku smrti, než je průměr kohorty, \\((e_X' - X) < (e_X - X)\\).")),
-            p("Úmrtnostní tabulky umožňují identifikaci jednotlivých rizikových skupin podle pravděpodobnosti úmrtí v jednotlivých následujících letech. Skupina s nejvyšším
+          p("Úmrtnostní tabulky umožňují identifikaci jednotlivých rizikových skupin podle pravděpodobnosti úmrtí v jednotlivých následujících letech. Skupina s nejvyšším
                                   rizikem představuje podíl členů dané kohorty, která zemře během prvního roku a úmrtím tedy
                                   přijde v průměru o půl roku života. Druhá riziková skupina představuje podíl členů kohorty,
                                   kteří zemřou během dvou let a přijdou tedy o 1,5 roku života. Poslední riziková skupina
                                   zahrnuje všechny členy kohorty až do 105 let věku (nejvyšší věk v úmrtnostních tabulkách) a
                                   jejich ztracené roky v důsledku úmrtí jsou rovny střední délce života v rámci dané kohorty."),
-            p("Zjednodušující veřejná diskuse o tom, zda lidé umírají \"s COVIDem\" nebo \"na COVID\"
+          p("Zjednodušující veřejná diskuse o tom, zda lidé umírají \"s COVIDem\" nebo \"na COVID\"
                                  fakticky odpovídá porovnání extrémních vymezení rizikových skupin. První zmíněná interpretace řadí
                                  zemřelé na COVID-19 do nejvíce rizikové skupiny. Druhá interpretace naopak předpokládá, že zemřelí na COVID-19 se od zbytku kohorty nijak neliší."),
-            p("Věříme, že tato aplikace může napomoci k nuancovanější diskusi dopadů epidemie v České republice."),
-            h3("Známá zkreslení"),
-            p("Detaily výpočtu ztracených let života, definice rizikových skupin a způsob přiřazení konkrétního věku při úmrtí
+          p("Věříme, že tato aplikace může napomoci k nuancovanější diskusi dopadů epidemie v České republice."),
+          h3("Známá zkreslení"),
+          p("Detaily výpočtu ztracených let života, definice rizikových skupin a způsob přiřazení konkrétního věku při úmrtí
                                    k jednotlivým věkovým kategoriím vytváří tendenci k mírnému nadhodnocení odhadů
                                    ztracených let života v rámci dané rizikové kategorie. Konkrétně jde o tato zkreslení:"),
-            tags$ul(
-              tags$li("Minimální počet ztracených let života je 1/2. To je hodnota ztracených let života u
+          tags$ul(
+            tags$li("Minimální počet ztracených let života je 1/2. To je hodnota ztracených let života u
                                              nejrizikovějších skupin v rámci jednotlivých věkových kategorií."),
-              tags$li("Omezení rizikové skupiny je nastaveno tak, že zahrnuje rizikové kategorie spadající
+            tags$li("Omezení rizikové skupiny je nastaveno tak, že zahrnuje rizikové kategorie spadající
                                      pod dané omezení plus nejbližší vyšší. Například 22.9 % mužů ve věku 92 let
                                      má očekávanou délku života půl roku. Omezení na rizikovou skupinu 10 % nejohroženějších bude v této
                                      kohortě prakticky zahrnovat 22.9 % nejohroženějších."),
-              tags$li("Protože data ÚZIS neobsahují specifický věk při úmrtí, ale pouze pětileté věkové kategorie,
+            tags$li("Protože data ÚZIS neobsahují specifický věk při úmrtí, ale pouze pětileté věkové kategorie,
                                              díváme se na tato úmrtí jako na úmrtí v druhém roce příslušného intervalu. Protože smrtnost
                                              COVID-19 má strmý věkový gradient, skutečný věk při úmrtí se bude spíše nacházet ve druhé polovině intervalu."),
-              tags$li("Odhadovaný celkový počet ztracených let může být systematicky podhodnocen úmrtími u kterých nebyla chybně vykázána diagnóza COVID-19.")
-            ),
-            h3("Vstupní data a replikační balíček"),
-            tags$ul(
-              tags$li(a("Úmrtnostní tabulky ČSÚ za rok 2019.",href = "https://www.czso.cz/csu/czso/umrtnostni_tabulky")),
-              tags$li("Datová sada ÚZIS o hospitalizovaných s onemocněním COVID-19, o přístup lze zažádat. Data v aplikaci jsou aktualizována každý den.")
-            ),
-            p("Repozitář na",a("https://github.com/JosefMontag/years_lost_counter", href = "https://github.com/JosefMontag/years_lost_counter"),
-              " obsahuje kompletní balíček pro replikaci výpočtů včetně výpočetního skriptu, vstupních dat, dokumentace a výsledných
+            tags$li("Odhadovaný celkový počet ztracených let může být systematicky podhodnocen úmrtími u kterých nebyla chybně vykázána diagnóza COVID-19.")
+          ),
+          h3("Vstupní data a replikační balíček"),
+          tags$ul(
+            tags$li(a("Úmrtnostní tabulky ČSÚ za rok 2019.",href = "https://www.czso.cz/csu/czso/umrtnostni_tabulky")),
+            tags$li("Datová sada ÚZIS o hospitalizovaných s onemocněním COVID-19, o přístup lze zažádat. Data v aplikaci jsou aktualizována každý den.")
+          ),
+          p("Repozitář na",a("https://github.com/JosefMontag/years_lost_counter", href = "https://github.com/JosefMontag/years_lost_counter"),
+            " obsahuje kompletní balíček pro replikaci výpočtů včetně výpočetního skriptu, vstupních dat, dokumentace a výsledných
                                    tabulek s odhady ztracených let života pro jednotlivé rizikové skupiny."),
-            title = "O aplikaci",
-            solidHeader = TRUE,
-            status = "info",
-            width = 12
-          )
-        ),
-        column(3,
-               box(
-                 p(
-                   strong("Aplikace přímo nezohledňuje osobní charakteritisky a zdravotní stav lidí, kteří v České republice umřeli na COVID-19.
+          title = "O aplikaci",
+          solidHeader = TRUE,
+          status = "info",
+          width = 12
+        )
+      ),
+      column(3,
+             box(
+               p(
+                 strong("Aplikace přímo nezohledňuje osobní charakteritisky a zdravotní stav lidí, kteří v České republice umřeli na COVID-19.
                                       Taková data nemáme k dispozici. Aplikace zohledňuje osobní charakteristiky a zdravotní stav pouze nepřímo - omezením osob, které
                                       mohou umírat s diagnostikovaným COVID-19 na určitou rizikovou skupinu. Uživatel si může porovnat výsledky pro omezení na různé rizikové skupiny.")
-                 ),
-                 p("Extrémní nastavení hodnoty vymezující rizikovou skupinu na 0 % je ekvivalentní narativu, že lidé umírají \"s COVIDem\". Naopak nastavení
-                                      na 100 % je extrémní poloha narativu, že lidé umírají výhradně \"na COVID\". Podrobný popis najdete v boxu \"O aplikaci\"."),
-                 p(
-                   strong("Aplikace nemá žádné \"správné\" ani \"doporučené\" nastavení.")
-                 ),
-                 width = 12,
-                 title = "Upozornění",
-                 solidHeader = TRUE,
-                 status = "danger"
                ),
-               box(
-                 p(strong("Štěpán Mikula"), " Katedra ekonomie, ESF MUNI"),
-                 p("Zpětnou vazbu k aplikaci a vizulizacím směřujte, prosím, na Štěpánův mail ",em("stepan.mikula@econ.muni.cz.")),
-                 p(strong("Josef Montag"), " Katedra národního hospodářství, Právnická fakulta UK"),
-                 p("Zpětnou vazbu, kritiku, či návrhy na vylepšení výpočtů směřujte na email ", em("josef.montag@gmail.com.")),
-                 width = 12,
-                 title = "Autoři",
-                 solidHeader = TRUE,
-                 status = "info"
-               )
+               p("Extrémní nastavení hodnoty vymezující rizikovou skupinu na 0 % je ekvivalentní narativu, že lidé umírají \"s COVIDem\". Naopak nastavení
+                                      na 100 % je extrémní poloha narativu, že lidé umírají výhradně \"na COVID\". Podrobný popis najdete v boxu \"O aplikaci\"."),
+               p(
+                 strong("Aplikace nemá žádné \"správné\" ani \"doporučené\" nastavení.")
+               ),
+               width = 12,
+               title = "Upozornění",
+               solidHeader = TRUE,
+               status = "danger"
+             ),
+             box(
+               p(strong("Štěpán Mikula"), " Katedra ekonomie, ESF MUNI"),
+               p("Zpětnou vazbu k aplikaci a vizulizacím směřujte, prosím, na Štěpánův mail ",em("stepan.mikula@econ.muni.cz.")),
+               p(strong("Josef Montag"), " Katedra národního hospodářství, Právnická fakulta UK"),
+               p("Zpětnou vazbu, kritiku, či návrhy na vylepšení výpočtů směřujte na email ", em("josef.montag@gmail.com.")),
+               width = 12,
+               title = "Autoři",
+               solidHeader = TRUE,
+               status = "info"
+             )
 
-        )
       )
     )
+  )
 )
 
 server <- function(input, output) {
 
-    get_riskgroup_lostyears <- reactive({
-        lost_years %>%
-            group_by(gender,died.at.age) %>%
-            arrange(risk.group, .by_group = TRUE) %>%
-            mutate(
-                keep = risk.group <= (input$risk_group/100),
-                keep = ifelse(row_number() == 1,
-                              TRUE, lag(keep))
-            ) %>%
-            filter(keep) %>%
-            select(-keep) %>%
-            slice_max(risk.group, n=1L) %>%
-            ungroup() %>%
-            select(gender,died.at.age,years.lost.by.risk.group)
-    })
+  get_riskgroup_lostyears <- reactive({
+    lost_years %>%
+      group_by(gender,died.at.age) %>%
+      arrange(risk.group, .by_group = TRUE) %>%
+      mutate(
+        keep = risk.group <= (input$risk_group/100),
+        keep = ifelse(row_number() == 1,
+                      TRUE, lag(keep))
+      ) %>%
+      filter(keep) %>%
+      select(-keep) %>%
+      slice_max(risk.group, n=1L) %>%
+      ungroup() %>%
+      select(gender,died.at.age,years.lost.by.risk.group)
+  })
 
-    get_riskgroup_share <- reactive({
-        lost_years %>%
-            group_by(gender,died.at.age) %>%
-            arrange(risk.group, .by_group = TRUE) %>%
-            mutate(
-                keep = risk.group <= (input$risk_group/100),
-                keep = ifelse(row_number() == 1,
-                              TRUE, lag(keep))
-            ) %>%
-            filter(keep) %>%
-            select(-keep) %>%
-            slice_max(risk.group, n=1L) %>%
-            ungroup() %>%
-            select(gender,died.at.age,risk.group)
-    })
+  get_riskgroup_share <- reactive({
+    lost_years %>%
+      group_by(gender,died.at.age) %>%
+      arrange(risk.group, .by_group = TRUE) %>%
+      mutate(
+        keep = risk.group <= (input$risk_group/100),
+        keep = ifelse(row_number() == 1,
+                      TRUE, lag(keep))
+      ) %>%
+      filter(keep) %>%
+      select(-keep) %>%
+      slice_max(risk.group, n=1L) %>%
+      ungroup() %>%
+      select(gender,died.at.age,risk.group)
+  })
 
-    get_benchmark_lostyears <- reactive({
-        lost_years %>%
-            #filter(risk.group <= input$risk_group) %>%
-            group_by(gender,died.at.age) %>%
-            slice_max(risk.group, n=1L) %>%
-            ungroup() %>%
-            select(gender,died.at.age,years.lost.by.risk.group)
-    })
+  get_benchmark_lostyears <- reactive({
+    lost_years %>%
+      #filter(risk.group <= input$risk_group) %>%
+      group_by(gender,died.at.age) %>%
+      slice_max(risk.group, n=1L) %>%
+      ungroup() %>%
+      select(gender,died.at.age,years.lost.by.risk.group)
+  })
 
-    get_riskgroup_data <- reactive({
-        lost_years %>%
-            group_by(gender,died.at.age) %>%
-            arrange(risk.group, .by_group = TRUE) %>%
-            mutate(
-                keep = risk.group <= (input$risk_group/100),
-                keep = ifelse(row_number() == 1,
-                              TRUE, lag(keep))
-            ) %>%
-            filter(keep) %>%
-            select(-keep) %>%
-            slice_max(risk.group, n=1L) %>%
-            ungroup() %>%
-            select(gender,died.at.age,years.lost.by.risk.group) %>%
-            left_join(uzis_data,., by = c("died.at.age", "gender"))  %>%
-            select(gender, died.at.age, years.lost.by.risk.group, death.date)
-    })
+  get_riskgroup_data <- reactive({
+    lost_years %>%
+      group_by(gender,died.at.age) %>%
+      arrange(risk.group, .by_group = TRUE) %>%
+      mutate(
+        keep = risk.group <= (input$risk_group/100),
+        keep = ifelse(row_number() == 1,
+                      TRUE, lag(keep))
+      ) %>%
+      filter(keep) %>%
+      select(-keep) %>%
+      slice_max(risk.group, n=1L) %>%
+      ungroup() %>%
+      select(gender,died.at.age,years.lost.by.risk.group) %>%
+      left_join(uzis_data,., by = c("died.at.age", "gender"))  %>%
+      select(gender, died.at.age, years.lost.by.risk.group, death.date)
+  })
 
-    get_benchmark_data <- reactive({
-        lost_years %>%
-            #filter(risk.group <= input$risk_group) %>%
-            group_by(gender,died.at.age) %>%
-            slice_max(risk.group, n=1L) %>%
-            ungroup() %>%
-            select(gender,died.at.age,years.lost.by.risk.group) %>%
-            left_join(uzis_data,., by = c("died.at.age", "gender"))  %>%
-            select(gender, died.at.age, years.lost.by.risk.group, death.date)
-    })
+  get_benchmark_data <- reactive({
+    lost_years %>%
+      #filter(risk.group <= input$risk_group) %>%
+      group_by(gender,died.at.age) %>%
+      slice_max(risk.group, n=1L) %>%
+      ungroup() %>%
+      select(gender,died.at.age,years.lost.by.risk.group) %>%
+      left_join(uzis_data,., by = c("died.at.age", "gender"))  %>%
+      select(gender, died.at.age, years.lost.by.risk.group, death.date)
+  })
 
-    output$mean_total <- renderValueBox({
+  output$mean_total <- renderValueBox({
 
-        males_myl <- get_riskgroup_data() %>%
-            #filter(gender == "Male") %>%
-            pull(years.lost.by.risk.group) %>%
-            mean(na.rm = TRUE) %>%
-            format(
-                digits = 1,
-                nsmall = 1,
-                decimal.mark = ",",
-                trim = TRUE
-            )
+    males_myl <- get_riskgroup_data() %>%
+      #filter(gender == "Male") %>%
+      pull(years.lost.by.risk.group) %>%
+      mean(na.rm = TRUE) %>%
+      format(
+        digits = 1,
+        nsmall = 1,
+        decimal.mark = ",",
+        trim = TRUE
+      )
 
-        valueBox(
-            males_myl, "Let",
-            color = "blue",
-            icon = icon("users")
-        )
-    })
+    valueBox(
+      males_myl, "Let",
+      color = "blue",
+      icon = icon("users")
+    )
+  })
 
-    output$male <- renderValueBox({
+  output$male <- renderValueBox({
 
-        males_myl <- get_riskgroup_data() %>%
-            filter(gender == "Male") %>%
-            pull(years.lost.by.risk.group) %>%
-            mean(na.rm = TRUE) %>%
-            format(
-                digits = 1,
-                nsmall = 1,
-                decimal.mark = ",",
-                trim = TRUE
-            )
+    males_myl <- get_riskgroup_data() %>%
+      filter(gender == "Male") %>%
+      pull(years.lost.by.risk.group) %>%
+      mean(na.rm = TRUE) %>%
+      format(
+        digits = 1,
+        nsmall = 1,
+        decimal.mark = ",",
+        trim = TRUE
+      )
 
-        valueBox(
-            males_myl, "Muži",
-            color = "olive",
-            icon = icon("mars")
-        )
-    })
+    valueBox(
+      males_myl, "Muži",
+      color = "olive",
+      icon = icon("mars")
+    )
+  })
 
-    output$years_total <- renderValueBox({
+  output$years_total <- renderValueBox({
 
-        males_myl <- get_riskgroup_data() %>%
-            pull(years.lost.by.risk.group) %>%
-            sum(na.rm = TRUE) %>%
-            sum(na.rm = TRUE) %>%
-            format(
-                digits = 1,
-                nsmall = 0,
-                decimal.mark = ",",
-                big.mark = " ",
-                trim = TRUE
-            )
+    males_myl <- get_riskgroup_data() %>%
+      pull(years.lost.by.risk.group) %>%
+      sum(na.rm = TRUE) %>%
+      sum(na.rm = TRUE) %>%
+      format(
+        digits = 1,
+        nsmall = 0,
+        decimal.mark = ",",
+        big.mark = " ",
+        trim = TRUE
+      )
 
-        valueBox(
-            males_myl, "Let",
-            color = "blue",
-            icon = icon("users")
-        )
-    })
+    valueBox(
+      males_myl, "Let",
+      color = "blue",
+      icon = icon("users")
+    )
+  })
 
-    output$male_total <- renderValueBox({
+  output$male_total <- renderValueBox({
 
-        males_myl <- get_riskgroup_data() %>%
-            filter(gender == "Male") %>%
-            pull(years.lost.by.risk.group) %>%
-            sum(na.rm = TRUE) %>%
-            sum(na.rm = TRUE) %>%
-            format(
-                digits = 1,
-                nsmall = 0,
-                decimal.mark = ",",
-                big.mark = " ",
-                trim = TRUE
-            )
+    males_myl <- get_riskgroup_data() %>%
+      filter(gender == "Male") %>%
+      pull(years.lost.by.risk.group) %>%
+      sum(na.rm = TRUE) %>%
+      sum(na.rm = TRUE) %>%
+      format(
+        digits = 1,
+        nsmall = 0,
+        decimal.mark = ",",
+        big.mark = " ",
+        trim = TRUE
+      )
 
-        valueBox(
-            males_myl, "Muži",
-            color = "olive",
-            icon = icon("mars")
-        )
-    })
+    valueBox(
+      males_myl, "Muži",
+      color = "olive",
+      icon = icon("mars")
+    )
+  })
 
-    output$female <- renderValueBox({
+  output$female <- renderValueBox({
 
-        males_fyl <- get_riskgroup_data() %>%
-            filter(gender == "Female") %>%
-            pull(years.lost.by.risk.group) %>%
-            mean(na.rm = TRUE) %>%
-            format(
-                digits = 1,
-                nsmall = 1,
-                decimal.mark = ",",
-                trim = TRUE
-            )
+    males_fyl <- get_riskgroup_data() %>%
+      filter(gender == "Female") %>%
+      pull(years.lost.by.risk.group) %>%
+      mean(na.rm = TRUE) %>%
+      format(
+        digits = 1,
+        nsmall = 1,
+        decimal.mark = ",",
+        trim = TRUE
+      )
 
-        valueBox(
-            males_fyl, "Ženy",
-            color = "orange",
-            icon = icon("venus")
-        )
-    })
+    valueBox(
+      males_fyl, "Ženy",
+      color = "orange",
+      icon = icon("venus")
+    )
+  })
 
-    output$female_total <- renderValueBox({
+  output$female_total <- renderValueBox({
 
-        males_fyl <- get_riskgroup_data() %>%
-            filter(gender == "Female") %>%
-            pull(years.lost.by.risk.group) %>%
-            sum(na.rm = TRUE) %>%
-            format(
-                digits = 1,
-                nsmall = 0,
-                decimal.mark = ",",
-                big.mark = " ",
-                trim = TRUE
-            )
+    males_fyl <- get_riskgroup_data() %>%
+      filter(gender == "Female") %>%
+      pull(years.lost.by.risk.group) %>%
+      sum(na.rm = TRUE) %>%
+      format(
+        digits = 1,
+        nsmall = 0,
+        decimal.mark = ",",
+        big.mark = " ",
+        trim = TRUE
+      )
 
-        valueBox(
-            males_fyl, "Ženy",
-            color = "orange",
-            icon = icon("venus")
-        )
-    })
+    valueBox(
+      males_fyl, "Ženy",
+      color = "orange",
+      icon = icon("venus")
+    )
+  })
 
-    output$lostyears <- renderPlot({
+  output$lostyears <- renderPlot({
 
-        labs <- uzis_data_all %>%
-            select(vek_kat) %>%
-            distinct() %>%
-            separate(vek_kat,c("age","age2"), remove = FALSE, convert = TRUE) %>%
-            mutate(age = age + 2) %>%
-            arrange(age) %>%
-            drop_na() %>%
-            filter(age >= min(lost_years$died.at.age))
+    labs <- uzis_data_all %>%
+      select(vek_kat) %>%
+      distinct() %>%
+      separate(vek_kat,c("age","age2"), remove = FALSE, convert = TRUE) %>%
+      mutate(age = age + 2) %>%
+      arrange(age) %>%
+      drop_na() %>%
+      filter(age >= min(lost_years$died.at.age))
 
-        left_join(
-            get_riskgroup_lostyears() %>%
-                select(gender, died.at.age, pn = years.lost.by.risk.group),
-            get_benchmark_lostyears() %>%
-                select(gender, died.at.age, bn = years.lost.by.risk.group),
-            by = c("gender", "died.at.age")
-        ) %>%
-            filter(died.at.age %in% labs$age) %>%
-            pivot_longer(-c(gender,died.at.age)) %>%
-            mutate(
-                value = ifelse(gender == "Male", -1*value, value),
-                died.at.age = died.at.age %>%
-                    as.integer %>%
-                    factor(
-                        levels = labs$age,
-                        labels = labs$vek_kat
-                    )
-            ) %>%
-            ggplot(
-                aes(x = died.at.age, y = value, fill = gender, alpha = name)
-            ) +
-            geom_col(
-                position = "identity"
-            ) +
-            scale_y_symmetric(labels = abs) +
-            scale_fill_brewer(
-                "Pohlaví",
-                palette = "Set2",
-                limits = c("Male","Female"),
-                labels = c("Muži","Ženy"),
-                guide = guide_legend(order = 1)
-            ) +
-            scale_alpha_manual(
-                "Riziková skupina",
-                limits = c("bn","pn"),
-                values = c(0.5,1),
-                labels = c("Celá populace",
-                           str_c("Nejrizikovějších ",input$risk_group," %")),
-                guide = guide_legend(order = 2)
-            ) +
-            coord_flip() +
-            theme_bw(
-                base_size = 15
-            ) +
-            theme(
-                panel.grid.major.y = element_blank(),
-                legend.position = "bottom",
-                axis.title = element_blank(),
-                legend.box = "vertical",
-                legend.title = element_blank()
-            )
-    })
+    left_join(
+      get_riskgroup_lostyears() %>%
+        select(gender, died.at.age, pn = years.lost.by.risk.group),
+      get_benchmark_lostyears() %>%
+        select(gender, died.at.age, bn = years.lost.by.risk.group),
+      by = c("gender", "died.at.age")
+    ) %>%
+      filter(died.at.age %in% labs$age) %>%
+      pivot_longer(-c(gender,died.at.age)) %>%
+      mutate(
+        value = ifelse(gender == "Male", -1*value, value),
+        died.at.age = died.at.age %>%
+          as.integer %>%
+          factor(
+            levels = labs$age,
+            labels = labs$vek_kat
+          )
+      ) %>%
+      mutate(
+        category = str_c(gender,"_",name)
+      ) %>%
+      ggplot(
+        aes(x = died.at.age, y = value, fill = category)
+      ) +
+      geom_col(
+        position = "identity"
+      ) +
+      scale_y_symmetric(labels = abs) +
+      scale_fill_manual(
+        "Pohlaví a riziková skupina",
+        values = c("#567f6d7d","#567f6dff","#ff851b7d","#ff851bff"),
+        limits = c("Male_bn","Male_pn","Female_bn","Female_pn"),
+        labels = c("Muži, celá populace",str_c("Muži, nejrizikovějších ",input$risk_group," %"),
+                   "Ženy, celá populace",str_c("Ženy, nejrizikovějších ",input$risk_group," %")),
+        guide = guide_legend(nrow=2,byrow=TRUE)
+      ) +
+      coord_flip() +
+      theme_bw(
+        base_size = 15
+      ) +
+      theme(
+        panel.grid.major.y = element_blank(),
+        legend.position = "bottom",
+        axis.title = element_blank(),
+        legend.box = "vertical",
+        legend.title = element_blank()
+      )
+  })
 
-    output$lostyears_total_gender <- renderPlot({
+  output$lostyears_total_gender <- renderPlot({
 
-        pn <- get_riskgroup_data() %>%
-            group_by(death.date,gender) %>%
-            summarise(
-                years.lost.by.risk.group = sum(years.lost.by.risk.group),
-                .groups = "drop"
-            ) %>%
-            group_by(gender) %>%
-            arrange(death.date) %>%
-            mutate(
-                pn = cumsum(years.lost.by.risk.group)
-            ) %>%
-            select(gender,death.date,pn) %>%
-            ungroup()
+    pn <- get_riskgroup_data() %>%
+      group_by(death.date,gender) %>%
+      summarise(
+        years.lost.by.risk.group = sum(years.lost.by.risk.group),
+        .groups = "drop"
+      ) %>%
+      group_by(gender) %>%
+      arrange(death.date) %>%
+      mutate(
+        pn = cumsum(years.lost.by.risk.group)
+      ) %>%
+      select(gender,death.date,pn) %>%
+      ungroup()
 
-        bn <- get_benchmark_data() %>%
-            group_by(death.date,gender) %>%
-            summarise(
-                years.lost.by.risk.group = sum(years.lost.by.risk.group),
-                .groups = "drop"
-            ) %>%
-            group_by(gender) %>%
-            arrange(death.date) %>%
-            mutate(
-                bn = cumsum(years.lost.by.risk.group)
-            ) %>%
-            select(gender,death.date,bn) %>%
-            ungroup()
+    bn <- get_benchmark_data() %>%
+      group_by(death.date,gender) %>%
+      summarise(
+        years.lost.by.risk.group = sum(years.lost.by.risk.group),
+        .groups = "drop"
+      ) %>%
+      group_by(gender) %>%
+      arrange(death.date) %>%
+      mutate(
+        bn = cumsum(years.lost.by.risk.group)
+      ) %>%
+      select(gender,death.date,bn) %>%
+      ungroup()
 
-        plot_lines <- left_join(pn,bn, by = c("gender", "death.date")) %>%
-            pivot_longer(-c(death.date,gender)) %>%
-            mutate(
-                gender = factor(gender, levels = c("Male","Female")),
-                name = factor(name, levels = c("bn","pn"))
-            ) %>%
-            mutate(
-                total = value/1000
-            )
+    plot_lines <- left_join(pn,bn, by = c("gender", "death.date")) %>%
+      pivot_longer(-c(death.date,gender)) %>%
+      mutate(
+        gender = factor(gender, levels = c("Male","Female")),
+        name = factor(name, levels = c("bn","pn"))
+      ) %>%
+      mutate(
+        total = value/1000
+      )
 
-        plot_lines %>%
-            ggplot(
-                aes(x = death.date, y = total, color = gender, alpha = name)
-            ) +
-            geom_line(
-              size = 1.5
-            ) +
-          scale_alpha_manual(
-            "Riziková skupina",
-            values = c(0.5,1),
-            limits = c("bn","pn"),
-            labels = function(x){
-              y <- x
-              y[x == "bn"] <- "Celá populace"
-              y[x == "pn"] <- str_c("Nejrizikovějších ",input$risk_group," %")
-              return(y)
-            }
-          ) +
-          scale_color_brewer(
-            "Pohlaví",
-            palette = "Set2",
-            limits = c("Male","Female"),
-            labels = c("Muži","Ženy"),
-            guide = guide_legend(order = 1)
-          ) +
-          scale_x_date(
-            "Týden a rok",
-            date_labels = "%U/%Y"
-          ) +
-            scale_y_continuous("Kumulativní počet ztracených let v tisících") +
-            theme_bw(
-                base_size = 15
-            ) +
-            theme(
-                legend.position = "bottom",
-                strip.background = element_blank(),
-                legend.box = "vertical",
-                legend.title = element_blank()
-            )
-    })
+    plot_lines %>%
+      mutate(
+        category = str_c(gender,"-",name)
+      ) %>%
+      ggplot(
+        aes(x = death.date, y = total, color = category)
+      ) +
+      geom_line(
+        size = 1.5
+      ) +
+      scale_color_manual(
+        "Pohlaví a riziková skupina",
+        values = c("#567f6d7d","#567f6dff","#ff851b7d","#ff851bff"),
+        limits = c("Male-bn","Male-pn","Female-bn","Female-pn"),
+        labels = c("Muži, celá populace",str_c("Muži, nejrizikovějších ",input$risk_group," %"),
+                   "Ženy, celá populace",str_c("Ženy, nejrizikovějších ",input$risk_group," %")),
+        guide = guide_legend(nrow=2,byrow=TRUE)
+      ) +
+      scale_x_date(
+        "Týden a rok",
+        date_labels = "%U/%Y"
+      ) +
+      scale_y_continuous("Kumulativní počet ztracených let (tis.)") +
+      theme_bw(
+        base_size = 15
+      ) +
+      theme(
+        legend.position = "bottom",
+        strip.background = element_blank(),
+        legend.box = "vertical",
+        legend.title = element_blank()
+      )
+  })
 
-    output$lostyears_mean_gender <- renderPlot({
+  output$lostyears_mean_gender <- renderPlot({
 
-      bn <- get_benchmark_data() %>%
-        group_by(gender) %>%
-        arrange(death.date, .by_group = TRUE) %>%
-        mutate(
-          mean = cummean(years.lost.by.risk.group)
-        ) %>%
-        group_by(gender, death.date) %>%
-        slice_tail(n=1L) %>%
-        ungroup() %>%
-        mutate(
-          gender = factor(gender, levels = c("Male","Female")),
-          name = "bn"
-        )
+    bn <- get_benchmark_data() %>%
+      group_by(gender) %>%
+      arrange(death.date, .by_group = TRUE) %>%
+      mutate(
+        mean = cummean(years.lost.by.risk.group)
+      ) %>%
+      group_by(gender, death.date) %>%
+      slice_tail(n=1L) %>%
+      ungroup() %>%
+      mutate(
+        gender = factor(gender, levels = c("Male","Female")),
+        name = "bn"
+      )
 
-        get_riskgroup_data() %>%
-            group_by(gender) %>%
-            arrange(death.date, .by_group = TRUE) %>%
-            mutate(
-                mean = cummean(years.lost.by.risk.group)
-            ) %>%
-            group_by(gender, death.date) %>%
-            slice_tail(n=1L) %>%
-            ungroup() %>%
-            mutate(
-                gender = factor(gender, levels = c("Male","Female")),
-                name = "pn"
-            ) %>%
-          bind_rows(.,bn) %>%
-            ggplot(
-                aes(x = death.date, y = mean, color = gender, alpha = name)
-            ) +
-            geom_line(
-                size = 1.5
-            ) +
-            scale_x_date(
-              "Týden a rok",
-              date_labels = "%U/%Y"
-              ) +
-            scale_y_continuous("Kumulativní průměr ztracených let") +
-            scale_color_brewer(
-                "Pohlaví",
-                palette = "Set2",
-                limits = c("Male","Female"),
-                labels = c("Muži","Ženy"),
-                guide = guide_legend(order = 1)
-            ) +
-          scale_alpha_manual(
-            "Riziková skupina",
-            values = c(0.5,1),
-            limits = c("bn","pn"),
-            labels = function(x){
-              y <- x
-              y[x == "bn"] <- "Celá populace"
-              y[x == "pn"] <- str_c("Nejrizikovějších ",input$risk_group," %")
-              return(y)
-            }
-          ) +
-            theme_bw(
-                base_size = 15
-            ) +
-            theme(
-                legend.position = "bottom",
-                strip.background = element_blank(),
-                legend.box = "vertical",
-                legend.title = element_blank()
-            )
+    get_riskgroup_data() %>%
+      group_by(gender) %>%
+      arrange(death.date, .by_group = TRUE) %>%
+      mutate(
+        mean = cummean(years.lost.by.risk.group)
+      ) %>%
+      group_by(gender, death.date) %>%
+      slice_tail(n=1L) %>%
+      ungroup() %>%
+      mutate(
+        gender = factor(gender, levels = c("Male","Female")),
+        name = "pn"
+      ) %>%
+      bind_rows(.,bn) %>%
+      mutate(
+        category = str_c(gender,"-",name)
+      ) %>%
+      ggplot(
+        aes(x = death.date, y = mean, color = category)
+      ) +
+      geom_line(
+        size = 1.5
+      ) +
+      scale_x_date(
+        "Týden a rok",
+        date_labels = "%U/%Y"
+      ) +
+      scale_y_continuous("Kumulativní průměr ztracených let") +
+      scale_color_manual(
+        "Pohlaví a riziková skupina",
+        values = c("#567f6d7d","#567f6dff","#ff851b7d","#ff851bff"),
+        limits = c("Male-bn","Male-pn","Female-bn","Female-pn"),
+        labels = c("Muži, celá populace",str_c("Muži, nejrizikovějších ",input$risk_group," %"),
+                   "Ženy, celá populace",str_c("Ženy, nejrizikovějších ",input$risk_group," %")),
+        guide = guide_legend(nrow=2,byrow=TRUE)
+      ) +
+      theme_bw(
+        base_size = 15
+      ) +
+      theme(
+        legend.position = "bottom",
+        strip.background = element_blank(),
+        legend.box = "vertical",
+        legend.title = element_blank()
+      )
 
-    })
+  })
 
-    output$COVID_demog <- renderPlot({
+  output$COVID_demog <- renderPlot({
 
-        labs <- uzis_data_all %>%
-            select(vek_kat) %>%
-            distinct() %>%
-            separate(vek_kat,c("age","age2"), remove = FALSE, convert = TRUE) %>%
-            arrange(age) %>%
-            drop_na() %>%
-            filter(age >= min(lost_years$died.at.age)-2)
+    labs <- uzis_data_all %>%
+      select(vek_kat) %>%
+      distinct() %>%
+      separate(vek_kat,c("age","age2"), remove = FALSE, convert = TRUE) %>%
+      arrange(age) %>%
+      drop_na() %>%
+      filter(age >= min(lost_years$died.at.age)-2)
 
-        uzis_data_all %>%
-            group_by(vek_kat,gender,umrti) %>%
-            summarise(
-                obs = n(),
-                .groups = "drop"
-            ) %>%
-            ungroup() %>%
-            separate(vek_kat,c("age","age2")) %>%
-            replace_na(list(umrti = 0)) %>%
-            select(-age2) %>%
-            mutate(umrti = umrti == 1) %>%
-            drop_na() %>%
-            mutate(
-                obs = ifelse(gender == "Male",-1*obs, obs),
-                age = as.integer(age) %>% factor(
-                    levels = labs$age,
-                    labels = labs$vek_kat
-                ),
-                fill_lab = str_c(gender,"_",umrti)
-            ) %>%
-            drop_na() %>%
-            ggplot(
-                aes(x = age, y = obs, fill = gender, alpha = umrti)
-            ) +
-            geom_col() +
-            scale_y_symmetric(labels = abs) +
-            scale_fill_brewer(
-                "Pohlaví",
-                palette = "Set2",
-                limits = c("Male","Female"),
-                labels = c("Muži","Ženy"),
-                guide = guide_legend(order = 1)
-            ) +
-            scale_alpha_manual(
-                "Úmrtí",
-                limits = c(FALSE,TRUE),
-                values = c(0.5,1),
-                labels = c("Bez úmrtí (pouze hospitalizace)","Úmrtí"),
-                guide = guide_legend(order = 2)
-            ) +
-            coord_flip() +
-            theme_bw(
-                base_size = 15
-            ) +
-            theme(
-                panel.grid.major.y = element_blank(),
-                legend.position = "bottom",
-                axis.title = element_blank(),
-                legend.box = "vertical",
-                legend.title = element_blank()
-            )
+    uzis_data_all %>%
+      group_by(vek_kat,gender,umrti) %>%
+      summarise(
+        obs = n(),
+        .groups = "drop"
+      ) %>%
+      ungroup() %>%
+      separate(vek_kat,c("age","age2")) %>%
+      replace_na(list(umrti = 0)) %>%
+      select(-age2) %>%
+      mutate(umrti = umrti == 1) %>%
+      drop_na() %>%
+      mutate(
+        obs = ifelse(gender == "Male",-1*obs, obs),
+        age = as.integer(age) %>% factor(
+          levels = labs$age,
+          labels = labs$vek_kat
+        ),
+        fill_lab = str_c(gender,"_",umrti)
+      ) %>%
+      drop_na() %>%
+      ggplot(
+        aes(x = age, y = obs, fill = fill_lab)
+      ) +
+      geom_col() +
+      scale_y_symmetric(labels = abs) +
+      scale_fill_manual(
+        "Pohlaví a riziková skupina",
+        values = c("#567f6d7d","#567f6dff","#ff851b7d","#ff851bff"),
+        limits = c("Male_FALSE","Male_TRUE","Female_FALSE","Female_TRUE"),
+        labels = c("Muži, pouze hospitalizace","Muži, úmrtí",
+                   "Ženy, pouze hospitalizace","Ženy, úmrtí"),
+        guide = guide_legend(nrow=2,byrow=TRUE)
+      ) +
+      coord_flip() +
+      theme_bw(
+        base_size = 15
+      ) +
+      theme(
+        panel.grid.major.y = element_blank(),
+        legend.position = "bottom",
+        axis.title = element_blank(),
+        legend.box = "vertical",
+        legend.title = element_blank()
+      )
 
-    })
+  })
 
-    output$risk_group <- renderPlot({
+  output$risk_group <- renderPlot({
 
-        labs <- uzis_data_all %>%
-            select(vek_kat) %>%
-            distinct() %>%
-            separate(vek_kat,c("age","age2"), remove = FALSE, convert = TRUE) %>%
-            mutate(age = age + 2) %>%
-            arrange(age) %>%
-            drop_na() %>%
-            filter(age >= min(lost_years$died.at.age))
+    labs <- uzis_data_all %>%
+      select(vek_kat) %>%
+      distinct() %>%
+      separate(vek_kat,c("age","age2"), remove = FALSE, convert = TRUE) %>%
+      mutate(age = age + 2) %>%
+      arrange(age) %>%
+      drop_na() %>%
+      filter(age >= min(lost_years$died.at.age))
 
-        population %>%
-            mutate(
-                population = ifelse(gender == "Male", -1*population, population),
-                vek_kat = factor(age, levels = labs$age, labels = labs$vek_kat),
-                gender = factor(gender, levels = c("Male","Female"))
-            ) %>%
-            left_join(., get_riskgroup_share(), by = c("gender" = "gender", "age" = "died.at.age")) %>%
-            mutate(
-                population.in.risk = population*risk.group
-            ) %>%
-            select(vek_kat,gender,starts_with("population")) %>%
-            pivot_longer(-c(vek_kat,gender)) %>%
-            ggplot(
-                aes(x = vek_kat, y = value, fill = gender, alpha = name)
-            ) +
-            geom_col(
-                position = "identity"
-            ) +
-            coord_flip() +
-            scale_y_symmetric(labels = abs) +
-            scale_fill_brewer(
-                "Pohlaví",
-                palette = "Set2",
-                limits = c("Male","Female"),
-                labels = c("Muži","Ženy"),
-                guide = guide_legend(order = 1)
-            ) +
-            scale_alpha_manual(
-                "Populace",
-                limits = c("population.in.risk","population"),
-                values = c(1,0.5),
-                labels = c("Populace v rizikové skupině","Ostatní populace"),
-                guide = guide_legend(order = 2)
-            ) +
-            theme_bw(
-                base_size = 15
-            ) +
-            theme(
-                panel.grid.major.y = element_blank(),
-                legend.position = "bottom",
-                axis.title = element_blank(),
-                legend.box = "vertical",
-                legend.title = element_blank()
-            )
+    population %>%
+      mutate(
+        population = ifelse(gender == "Male", -1*population, population),
+        vek_kat = factor(age, levels = labs$age, labels = labs$vek_kat),
+        gender = factor(gender, levels = c("Male","Female"))
+      ) %>%
+      left_join(., get_riskgroup_share(), by = c("gender" = "gender", "age" = "died.at.age")) %>%
+      mutate(
+        population.in.risk = population*risk.group
+      ) %>%
+      select(vek_kat,gender,starts_with("population")) %>%
+      pivot_longer(-c(vek_kat,gender)) %>%
+      mutate(
+        category = str_c(gender,"_",name)
+      ) %>%
+      ggplot(
+        aes(x = vek_kat, y = value/1000, fill = category)
+      ) +
+      geom_col(
+        position = "identity"
+      ) +
+      coord_flip() +
+      scale_y_symmetric(labels = function(x){
+        y <- abs(x)
+        y[x != 0] <- str_c(y[x!=0]," tisíc")
+        return(y)
+      } ) +
+      scale_fill_manual(
+        "Pohlaví a riziková skupina",
+        values = c("#567f6d7d","#567f6dff","#ff851b7d","#ff851bff"),
+        limits = c("Male_population","Male_population.in.risk","Female_population","Female_population.in.risk"),
+        labels = c("Muži, ostatní","Muži v rizikové skupině",
+                   "Ženy, ostatní","Ženy v rizikové skupině"),
+        guide = guide_legend(nrow=2,byrow=TRUE)
+      ) +
+      theme_bw(
+        base_size = 15
+      ) +
+      theme(
+        panel.grid.major.y = element_blank(),
+        legend.position = "bottom",
+        axis.title = element_blank(),
+        legend.box = "vertical",
+        legend.title = element_blank()
+      )
 
-    })
+  })
 
-    }
+}
 
 shinyApp(ui, server)
