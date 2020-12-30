@@ -3,7 +3,6 @@ library(shinydashboard)
 library(tidyverse)
 library(lemon)
 library(grid)
-library(fresh)
 
 ### Read data // to be replaced by reading from a remote source
 lost_years <- read_csv("https://raw.github.com/JosefMontag/years_lost_counter/main/lost_years_by_risk_group.csv")
