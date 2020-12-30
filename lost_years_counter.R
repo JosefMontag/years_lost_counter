@@ -1,15 +1,12 @@
 library(readxl)
 library(tidyverse)
+rm(list=ls())
 
 # Compute years lost by risk group using actuarial tables {{{
 
 lost.years <- 
   lapply(c('M', 'Z'), function(gend) {
-    # Load Czech actuarial table for Males/Females (documentation at
-    # http://www.czso.cz/documents/10180/85591762/metodika_ut_akt2020.pdf)
-    fl <- paste0('Input_data/UT_Kannisto_2019', gend, '.xlsx')
-    life <- 
-      read_xlsx(fl, skip = 2) %>%
+    life <- read_csv(paste0('Input_data/UT_Kannisto_2019', gend, '.csv')) %>%
         select(1, lx, dx, mx, Lx)
       names(life)[1] <- 'age'
     lapply(seq(12, 102, 5), function(died.at.age) {
@@ -17,16 +14,12 @@ lost.years <-
         filter(age >= died.at.age) %>%
         mutate(gender = gend,
                died.at.age = died.at.age,
-               risk.group = lead(1 - lx / max(lx), default = 1),
+               risk.group = cumsum(dx) / sum(dx),
                prob.death = diff(c(0, risk.group)),
-               # dx = c(dx[-n()], dx[n()] / mx[n()]),
-               # years.lost.corr = 
-               #   cumsum((age - died.at.age) * prob.death) / 
-               #     risk.group + 0.5,
-               years.lost.new = cumsum(rev(Lx)) /
-                             lx + 0.5,
-               years.lost = (cumsum(dx * (age - died.at.age + 1)) /
-                             cumsum(dx)) - 0.5
+               ax = (Lx - lx + dx) / dx,
+               ax = ifelse(age %in% 1:104, round(ax, 1), ax),
+               potential.years = (age - died.at.age + ax),
+               years.lost = cumsum(potential.years * dx) / cumsum(dx)
                )
       }) %>%
       bind_rows
@@ -38,42 +31,40 @@ select(gender,
        prob.death,
        risk.group,
        alt.age.death = age, 
-       years.lost.new,
+       lx,
+       dx,
+       ax,
+       potential.years,
        years.lost.by.risk.group = years.lost
        ) 
+lost.years
 
-# # Save the result
-# lost.years %>%
-# mutate_if(is.numeric, round, 6) %>%
-# mutate_all(as.character) %>%
-#   write_csv('lost_years_by_risk_group.csv')
+# Save the result
+lost.years %>%
+mutate_if(is.numeric, round, 6) %>%
+mutate_all(as.character) %>%
+  write_csv('lost_years_by_risk_group.csv')
 
-# Compare lost years and official expectancy {{{1
+# Check consistency: Compare lost years for risk group 1 with official e_x {{{1
 
 life.raw <- 
-  read_xlsx('UT_Kannisto_2019M.xlsx', skip = 2) %>%
+  read_csv('Input_data/UT_Kannisto_2019M.csv') %>%
     select(1, , ex) %>% 
     mutate(gender = 'Male') %>%
-    bind_rows(read_xlsx('UT_Kannisto_2019Z.xlsx', skip = 2) %>%
+    bind_rows(read_csv('Input_data/UT_Kannisto_2019Z.csv') %>%
               select(1, ex) %>%
               mutate(gender = 'Female')
             )
 names(life.raw)[1] <- 'age'
-life.raw <- life.raw %>%
-  filter(age <= 105)
 
 lost.years %>%
-  group_by(died.at.age, gender) %>% 
-  # filter(risk.group <=0.5) %>%
-  slice_tail %>%
-    ungroup %>%
+  filter(risk.group == 1) %>%
   select(gender, age = died.at.age, starts_with('years.lost')) %>%
   left_join(life.raw) %>% 
   arrange(gender, age) %>%
-  group_by(gender) %>% 
-  # group_by(gender, age > 70) %>% 
-  # summarize_all(mean)
-  print(n=50)
+  group_by(gender) %>%
+  mutate(diff = years.lost.by.risk.group - ex) %>%
+  print(n = nrow(.))
 
 # Compute Covid-related lost years {{{1
 
@@ -102,12 +93,20 @@ weights <- uzis_data %>%
 
 
 lost.years %>%
-  # filter(died.at == 0) %>%
-  filter(risk.group <= 0.2) %>%
+  filter(risk.group <= 0.01) %>%
   group_by(died.at.age, gender) %>%
   slice_tail %>%
-  print(n=50)
   left_join(weights) %>%
   filter(!is.na(weight)) %>%
   group_by(gender) %>%
-  summarize(sum(years.lost * weight))
+  summarize(sum(years.lost.by.risk.group * weight))
+
+# Play
+
+uzis_data %>%
+  filter(!is.na(tyden_umrti)) %>%
+   mutate(vek = as.integer(str_replace(vek_kat, '-.*', '')) + 2.5) %>%
+  group_by(tyden_umrti, pohlavi) %>%
+  summarize(vek = mean(vek)) %>%
+  ggplot(aes(x = tyden_umrti, y = vek, color = pohlavi)) +
+  geom_line()

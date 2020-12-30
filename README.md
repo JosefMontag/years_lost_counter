@@ -1,54 +1,50 @@
----
-papersize: a4paper
-geometry: margin=35mm
-fontfamily: mathptmx
-fontsize: 12pt
-numbersections: true
-linestretch: 1.25
-colorlinks: true
-header-includes:
-    - \usepackage{bm}
-    - \usepackage{nicefrac}
-    - \renewcommand\thesection{}
-    - \renewcommand\thesubsection{\arabic{subsection}}
-    - \setcounter{secnumdepth}{3} 
-    - \widowpenalty=10000
-    - \clubpenalty=10000 
-...
+# Years lost counter - Replication package
 
-This package computes estimates of years lost when someone dies and does so for each risk group available in the data. This facilitates computations of years lost under alternative assumptions about the selection mechanism of those who died from the rest of the population (surviving cohort).
+This package complements the web app [smikula.shinyapps.io/lostyears](https://smikula.shinyapps.io/lostyears/), 
+which facilitates computations of years lost due to COVID-19 deaths. It allows to explicitly specify and vary the
+assumption of the risk group to which an average dying person would have belonged. The basic explanation of
+how the app works, its functionalities, and the output estimates is available on the app's website (in Czech).
 
-Years lost are computed from the actuarial tables published by the Czech Statistical Office available at [https://www.czso.cz/csu/czso/umrtnostni_tabulky](https://www.czso.cz/csu/czso/umrtnostni_tabulky).
+## Contents of this package
 
-# Computing years lost in general
+* Document [Computing_years_lost.pdf](https://github.com/JosefMontag/years_lost_counter/blob/main/Computing_years_lost.pdf)
+describes how the risk groups are defined and how risk group-specific years lost are computed from the actuarial tables.
+* Folder [Input_data](https://github.com/JosefMontag/years_lost_counter/tree/main/Input_data) contains:
+    * CSV files with Czech actuarial tables from the Czech Statistical Office (see https://www.czso.cz/csu/czso/umrtnostni_tabulky, 
+    for the original files and the documentation.
+    * Daily exports of individual-level data on COVID-19 hospitalizations (patient's gender, age, week of death if the patient died)
+    from the Institute of Health Information and Statistics (ÚZIS). The full original data is not publicly available but can be 
+    accessed upon request, see Czech Ministry of Health's COVID-19 data website https://onemocneni-aktualne.mzcr.cz/api/v2/covid-19.
+* R script [lost_years_counter.R](https://github.com/JosefMontag/years_lost_counter/blob/main/lost_years_counter.R) computes
+the risk group-specific years lost for individual years of death using the actuarial tables from the Czech Statistical Office.
+* The CSV [lost_years_by_risk_group.csv](https://github.com/JosefMontag/years_lost_counter/blob/main/lost_years_by_risk_group.csv)
+contains the estimates of years lost for each age at death and risk group computed by the script.
+* R script [lostyears_shinyapp.R](https://github.com/JosefMontag/years_lost_counter/blob/main/lostyears_shinyapp.R) is the code behind 
+the Shiny web app. It uses the risk group-specific years lost estimates and the data on hospitalizations to produce real-time estimates
+of years lost due to COVID-19 deaths in the Czech Republic.
 
-Denote $q_x$ the probability of a person dying at age $x$ conditional on being alive at $x-1$ from the actuarial tables. A person who died at the age $x-1$, had she not died at that age, would survive $y$ more years, dying at age $x - 1 + y$. Let $\bm{y} = (1,  \ldots, 104 - x -1)$ be the vector of potential years lost (104 is the maximum age of death in the actuarial tables, which determines the maximum possible years lost).
-Let $\bm{d} = (q_x, d_2, \ldots, d_{104 - x - 1})$ be the vector probabilities of dying at ages $x$ to 104, where the individual $d$'s are computed as
-<img src="https://render.githubusercontent.com/render/math?math=
-\begin{align*}
-d_y &= \frac{\hat{d_y}}{\sum{\hat{d_y}}}, \qquad \text{where} \\
-\hat{d}_y &= q_{x - 1 + y}\prod_{i =0}^{y - 1}{(1 -q_{x + i})},
-\end{align*}">
-where the product gives the probability of being alive at $x - 1 + y$. Note that the probability of a person dying at some point is equal to one but $\sum \hat{d_y}$ is not guaranteed to add up to one. To make sure $\sum d_y = 1$, we normalize $\hat{d_y}$'s by dividing by $\sum\hat{d_y}$. Her years lost due to dying at $x - 1$ are then
-\begin{align*}
-L = \bm{y}' \bm{d}.
-\end{align*}
+## Availability for other uses
 
-# Computing risk group-specific years lost 
+* The app can be easily adapted to data from other countries or to other diseases.
+* The code can be freely used, but proper credits should be given.
 
-Think of $\bm{y}$ as identifier of risk brackets from which a person who died at $x-1$ is drawn. Let risk-group $r$ be
-\begin{align*}
-g_r = \sum_1^r d_y,
-\end{align*}
-and let $\bm{z_r} = (1, \ldots, r)$, where $r \leq 104 - x -1$, and $\bm{d_r} = [(q_x, d_2, \ldots, d_r) / g_r]$
-then the risk group-specific years lost are
-\begin{align*}
-L_r = \bm{z_r}' \bm{d_r}
-\end{align*}
+## Authors and feedback
 
-Thus, $L_1 = 1$ and $L_{104 - x -1} = L.$ We note that these two extremes have the interpretation of years lost of those "dying with Covid" and those "dying from Covid", respectively, while $L_r, r \in (2, \ldots,  104 - x - 2)$ are years lost of those between the two extremes. 
+Štěpán Mikula, PhD  
+Department of Economics  
+Faculty of Economics and Administration  
+Masaryk University
 
-# Comparing $L$ and life expectancy
+Josef Montag, PhD  
+Department of Economics  
+Faculty of Law  
+Charles University
 
-$L$ can be directly compared to the life expectancy in the actuarial tables (column "ex"). 
+We greatly appreciate any feedback. 
+
+With queries or feedback regarding:
+
+* the web app contact Štěpán Mikula at stepan.mikula@gmail.com.
+* the computation of risk group-specific years lost josef.montag@gmail.com.
+
 
