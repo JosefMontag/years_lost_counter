@@ -40,9 +40,11 @@ Department of Economics
 Faculty of Law  
 Charles University
 
-We greatly appreciate any feedback
+We greatly appreciate any feedback. 
 
-* Contact Štěpán Mikula at stepan.mikula@gmail.com with queries or feedback regarding the web app.
-* Contact Josef Montag at josef.montag@gmail.com with queries or feedback regarding the computation of risk group-specific years lost.
+With queries or feedback regarding:
+
+* the web app contact Štěpán Mikula at stepan.mikula@gmail.com.
+* the computation of risk group-specific years lost josef.montag@gmail.com.
 
 
