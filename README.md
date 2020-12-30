@@ -30,19 +30,19 @@ of years lost due to COVID-19 deaths in the Czech Republic.
 
 ## Authors and feedback
 
-Štěpán Mikula, PhD 
-Department of Economics 
-Faculty of Economics and Administration
+Štěpán Mikula, PhD  
+Department of Economics  
+Faculty of Economics and Administration  
 Masaryk University
 
-Josef Montag, PhD
-Department of Economics 
-Faculty of Law
+Josef Montag, PhD  
+Department of Economics  
+Faculty of Law  
 Charles University
 
 We greatly appreciate any feedback
 
 * Contact Štěpán Mikula at stepan.mikula@gmail.com with queries or feedback regarding the web app.
-* Contact Josef Montag at josef.montag@gmail.com with queries or feedback regarding the computation of the risk group-specific years lost.
+* Contact Josef Montag at josef.montag@gmail.com with queries or feedback regarding the computation of risk group-specific years lost.
 
 
