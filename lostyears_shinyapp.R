@@ -62,7 +62,16 @@ ui <- dashboardPage(
     width = 600
   ),
   dashboardBody(
-    tags$style(),
+    tags$head(
+      #tags$link('https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@1,300&display=swap'),
+      #tags$style('body {font-family: "Open Sans", sans-serif;}'),
+      tags$style('
+      body {font-family: "Open Sans", sans-serif;}
+
+      .box-header h3 {
+                      font-family: "Open Sans", sans-serif;
+                  }')
+      ),
     fluidRow(
       column(4,
              box(
