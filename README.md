@@ -1,7 +1,7 @@
 # Years lost counter - Replication package
 
 This package complements the web app [smikula.shinyapps.io/lostyears](https://smikula.shinyapps.io/lostyears/), 
-which facilitates computations of years lost due to COVID-19 deaths. It allows to explicitly specify and vary the
+which facilitates computations of years lost due to COVID-19 deaths in the Czech Republic. It allows to explicitly specify and vary the
 assumption of the risk group to which an average dying person would have belonged. The basic explanation of
 how the app works, its functionalities, and the output estimates is available on the app's website (in Czech).
 
