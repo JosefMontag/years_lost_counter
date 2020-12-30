@@ -45,7 +45,16 @@ mutate_if(is.numeric, round, 6) %>%
 mutate_all(as.character) %>%
   write_csv('lost_years_by_risk_group.csv')
 
-# Check consistency: Compare lost years for risk group 1 with official e_x {{{1
+# Consistency checks: {{{1
+
+# Check years lost of highest risk groups are equal to 0.5 (a_x) {{{2
+
+lost.years %>%
+  group_by(gender, died.at.age) %>%
+  filter(risk.group == min(risk.group)) %>%
+  print(n = nrow(.))
+
+# Compare lost years for risk group 1 with official e_x {{{2
 
 life.raw <- 
   read_csv('Input_data/UT_Kannisto_2019M.csv') %>%
@@ -65,48 +74,3 @@ lost.years %>%
   group_by(gender) %>%
   mutate(diff = years.lost.by.risk.group - ex) %>%
   print(n = nrow(.))
-
-# Compute Covid-related lost years {{{1
-
-# Get UZIS data
-uzis_data <- read_csv('https://raw.githubusercontent.com/JosefMontag/years_lost_counter/main/Input_data/covid_cases_and_deaths.csv')
-
-# Compute age structure of covid deaths
-weights <- uzis_data %>%
-   filter(!is.na(tyden_umrti)) %>%
-   mutate(vek = as.integer(str_replace(vek_kat, '-.*', '')) + 2.5) %>%
-   select(
-       gender = pohlavi,
-       died.at.age = vek
-   ) %>%
-   mutate(
-       died.at.age = as.integer(floor(died.at.age)),
-       gender = ifelse(gender == "M","Male","Female")
-   ) %>%
-   group_by(gender) %>%
-   add_tally() %>%
-   group_by(gender, died.at.age) %>%
-   summarise(
-       weight = n()/first(n),
-       .groups = "drop"
-   )
-
-
-lost.years %>%
-  filter(risk.group <= 0.01) %>%
-  group_by(died.at.age, gender) %>%
-  slice_tail %>%
-  left_join(weights) %>%
-  filter(!is.na(weight)) %>%
-  group_by(gender) %>%
-  summarize(sum(years.lost.by.risk.group * weight))
-
-# Play
-
-uzis_data %>%
-  filter(!is.na(tyden_umrti)) %>%
-   mutate(vek = as.integer(str_replace(vek_kat, '-.*', '')) + 2.5) %>%
-  group_by(tyden_umrti, pohlavi) %>%
-  summarize(vek = mean(vek)) %>%
-  ggplot(aes(x = tyden_umrti, y = vek, color = pohlavi)) +
-  geom_line()
