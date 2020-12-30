@@ -74,16 +74,18 @@ ui <- dashboardPage(
     fluidRow(
       column(4,
              box(
-               p("Nastavení parametru \"Riziková skupina\" určuje v kalkulaci ztracených let předpoklad o tom, kdo umírá na COVID-19. Nižší hodnota znamená, že
-                                   na COVID-19 umírají nejrizikovější skupiny obyvatel, které mají, bez ohledu na COVID-19, nejnižší naději na dožití. Vyšší hodnoty naopak
-                                   znamenají, že na COVID-19 umírají lidé napříč populací."),
+               p(strong("Nastavení parametru \"Riziková skupina\" určuje v kalkulaci ztracených let klíčový předpoklad o tom,
+                        kdo v jednotlivých věkových kohortách typicky umírá na COVID-19."),
+               "Nižší hodnota znamená, že na COVID-19 umírají zejména lidé s
+               nižší naději na dožití. Vyšší hodnota naopak znamená, že na COVID-19 umírají lidé napříč jednotlivými kohortami."),
                sliderInput(
                  "risk_group",
                  "Riziková skupina (%):",
                  min = 0,
                  max = 100,
                  value = 100,
-                 width = '100%'
+                 width = '100%',
+                 post = " %"
                ),
                p(
                  strong("Aplikace nemá žádné \"správné\" ani \"doporučené\" nastavení.")
@@ -169,61 +171,63 @@ ui <- dashboardPage(
         box(
           p(
             "Každé úmrtí zkracuje život. Tato aplikace počítá odhady ztracených let života
-                                     v důsledku úmrtí, přičemž umožňuje explicitně specifikovat ohroženou část populace (\"rizikovou skupinu\")."
+                                     v důsledku úmrtí na COVID-19 v České republice, přičemž umožňuje explicitně
+            specifikovat ohroženou část populace v rámci jednotlivých věkových kohort (\"rizikovou skupinu\")."
           ),
-          p("Výstupem aplikace je jednak hypotetický počet let, kterých by se průměrný jedinec v dané
-                                 rizikové skupině dožil, pokud by neumřel. Tyto hodnoty jsou použity pro
-                                 výpočet odhadu průměrných a celkových ztracených let života v důsledku úmrtí na
-                                 onemocnění COVID-19. Aplikace současně umožňuje testovat, jak tento předpoklad o
-            rizikové skupině ovlivňuje výsledné odhady ztracených let života."),
+          p("Aplikace počítá hypotetický počet let, kterých by se průměrný jedinec v dané
+                                 rizikové skupině dožil, pokud by nezemřel. Z těchto hodnot
+                                 jsou následně vypočteny odhady průměrných a celkových ztracených let života v důsledku úmrtí na
+                                 COVID-19. Aplikace současně umožňuje sledovat, jak předpoklad o
+            rizikové skupině ovlivňuje odhady ztracených let života."),
           h3("Riziková skupina"),
-          withMathJax(p("Rizikové skupiny jsou odhadnuty na základě Úmrtnostních tabulek a jejich
-                                   interpretace je následující: Uvažujme člověka, který umřel ve věku \\(X\\).
-                                   Pokud by v tomto věku nezemřel, potom by zemřel v budoucnu ve věku \\(Y\\).
+          withMathJax(p("Rizikové skupiny jsou odhadnuty na základě úmrtnostních tabulek pro ČR a jejich
+                                   interpretace je následující: Uvažujme člověka, který zemřel ve věku \\(X\\).
+                                   Pokud by v tomto věku nezemřel, potom by zemřel někdy v budoucnu ve věku \\(Y\\).
                                    Rozdíl \\(Y - X\\) představuje ztracené roky života.")),
           withMathJax(p("Ztracené roky života se mezi jednotlivci liší a \\(Y\\) je z definice nepozorovatelné. Proto ho
                                    musíme odhadovat z agregovaných dat. Pokud by se zemřelý nijak
-                                  systematicky nelišil od ostatních lidí v populaci, potom by délka jeho života odpovídala střední délce života přešivší
+                                  systematicky nelišil od ostatních lidí v populaci, potom by \\(Y\\) odpovídalo střední délce života přešivší
                                   populace ze stejné věkové kohorty (tj. kolika let se v průměru
                                   dožijí všichni vrstevníci, kteří nezemřeli ve věku \\(X\\)), nebo-li \\(e_X\\).")),
-          withMathJax(p("Předpoklad, že se zemřelí nijak neliší od zbytku kohorty, je však specifický a ne nutně
-                                  realistický. Mohou například pocházet z rizikovější skupiny v rámci dané kohorty a jejich
+          withMathJax(p("Předpoklad, že se zemřelí nijak neliší od zbytku kohorty však není nutně
+                                  realistický. Zemřelí mohou pocházet z rizikovější skupiny a jejich
                                   průměrná očekávaná délka života \\(e_X'\\) je tedy nižší než \\(e_X\\). To implikuje nižší počet
                                   let ztracených v důsledku smrti, než je průměr kohorty, \\((e_X' - X) < (e_X - X)\\).")),
-          p("Úmrtnostní tabulky umožňují identifikaci jednotlivých rizikových skupin podle pravděpodobnosti úmrtí v jednotlivých následujících letech. Skupina s nejvyšším
-                                  rizikem představuje podíl členů dané kohorty, která zemře během prvního roku a úmrtím tedy
+          p("Úmrtnostní tabulky umožňují identifikaci rizikových skupin podle pravděpodobnosti úmrtí
+                                  v jednotlivých následujících letech. Skupina s nejvyšším
+                                  rizikem představuje podíl členů dané kohorty, která zemře během následujícího roku a úmrtím tedy
                                   přijde v průměru o půl roku života. Druhá riziková skupina představuje podíl členů kohorty,
-                                  kteří zemřou během dvou let a přijdou tedy o 1,5 roku života. Poslední riziková skupina
-                                  zahrnuje všechny členy kohorty až do 105 let věku (nejvyšší věk v úmrtnostních tabulkách) a
-                                  jejich ztracené roky v důsledku úmrtí jsou rovny střední délce života v rámci dané kohorty."),
+                                  kteří zemřou během dvou let a zahrnuje tedy i jedince, kteří přijdou o 1,5 roku života. Poslední riziková skupina
+                                  zahrnuje všechny členy kohorty, kteří se dožijí až 105 let (nejvyšší věk v úmrtnostních tabulkách)."),
           p("Zjednodušující veřejná diskuse o tom, zda lidé umírají \"s COVIDem\" nebo \"na COVID\"
                                  fakticky odpovídá porovnání extrémních vymezení rizikových skupin. První zmíněná interpretace řadí
-                                 zemřelé na COVID-19 do nejvíce rizikové skupiny. Druhá interpretace naopak předpokládá, že zemřelí na COVID-19 se od zbytku kohorty nijak neliší."),
-          p("Věříme, že tato aplikace může napomoci k nuancovanější diskusi dopadů epidemie v České republice."),
+                                 zemřelé na COVID-19 do nejvíce rizikové skupiny. Druhá interpretace naopak předpokládá, že zemřelí na
+                                 COVID-19 se od zbytku kohorty nijak neliší."),
           h3("Známá zkreslení"),
           p("Detaily výpočtu ztracených let života, definice rizikových skupin a způsob přiřazení konkrétního věku při úmrtí
                                    k jednotlivým věkovým kategoriím vytváří tendenci k mírnému nadhodnocení odhadů
                                    ztracených let života v rámci dané rizikové kategorie. Konkrétně jde o tato zkreslení:"),
           tags$ul(
-            tags$li("Minimální počet ztracených let života je 1/2. To je hodnota ztracených let života u
+            tags$li("Minimální počet ztracených let života je 0,5. To je hodnota ztracených let života u
                                              nejrizikovějších skupin v rámci jednotlivých věkových kategorií."),
-            tags$li("Omezení rizikové skupiny je nastaveno tak, že zahrnuje rizikové kategorie spadající
-                                     pod dané omezení plus nejbližší vyšší. Například 22.9 % mužů ve věku 92 let
+            tags$li("Vymezení rizikové skupiny je v aplikaci nastaveno tak, že zahrnuje rizikové kategorie spadající
+                                     pod dané omezení plus nejbližší vyšší. Například 22,9 % mužů ve věku 92 let
                                      má očekávanou délku života půl roku. Omezení na rizikovou skupinu 10 % nejohroženějších bude v této
-                                     kohortě prakticky zahrnovat 22.9 % nejohroženějších."),
+                                     kohortě prakticky zahrnovat 22,9 % nejohroženějších."),
             tags$li("Protože data ÚZIS neobsahují specifický věk při úmrtí, ale pouze pětileté věkové kategorie,
                                              díváme se na tato úmrtí jako na úmrtí v druhém roce příslušného intervalu. Protože smrtnost
-                                             COVID-19 má strmý věkový gradient, skutečný věk při úmrtí se bude spíše nacházet ve druhé polovině intervalu."),
-            tags$li("Odhadovaný celkový počet ztracených let může být systematicky podhodnocen úmrtími u kterých nebyla chybně vykázána diagnóza COVID-19.")
+                                             COVID-19 má strmý věkový gradient, skutečný věk při úmrtí se bude spíše nacházet ve druhé polovině intervalu.")
           ),
+          p("Odhadovaný celkový počet ztracených let je naopak podhodnocen tím, že evidence ÚZIS nezahrnuje nediagnostikovaná úmrtí na COVID-19."),
           h3("Vstupní data a replikační balíček"),
           tags$ul(
             tags$li(a("Úmrtnostní tabulky ČSÚ za rok 2019.",href = "https://www.czso.cz/csu/czso/umrtnostni_tabulky")),
-            tags$li("Datová sada ÚZIS o hospitalizovaných s onemocněním COVID-19, o přístup lze zažádat. Data v aplikaci jsou aktualizována každý den.")
+            tags$li("Datová sada ÚZIS o hospitalizovaných s onemocněním COVID-19, o přístup lze ",a("žádat.",href = "https://onemocneni-aktualne.mzcr.cz/api/v2/covid-19"),
+                    "Data v aplikaci jsou aktualizována každý den.")
           ),
-          p("Repozitář na",a("https://github.com/JosefMontag/years_lost_counter", href = "https://github.com/JosefMontag/years_lost_counter"),
-            " obsahuje kompletní balíček pro replikaci výpočtů včetně výpočetního skriptu, vstupních dat, dokumentace a výsledných
-                                   tabulek s odhady ztracených let života pro jednotlivé rizikové skupiny."),
+          p("Repozitář na ",a("github.com/JosefMontag/years_lost_counter", href = "https://github.com/JosefMontag/years_lost_counter"),
+            " obsahuje kompletní balíček pro replikaci výpočtů včetně výpočetního skriptu, vstupních dat, dokumentace, výsledných
+                                   tabulek s odhady ztracených let života pro jednotlivé rizikové skupiny a zdrojového kódu této aplikace."),
           title = "O aplikaci",
           solidHeader = TRUE,
           status = "info",
@@ -233,14 +237,13 @@ ui <- dashboardPage(
       column(3,
              box(
                p(
-                 strong("Aplikace přímo nezohledňuje osobní charakteritisky a zdravotní stav lidí, kteří v České republice umřeli na COVID-19.
-                                      Taková data nemáme k dispozici. Aplikace zohledňuje osobní charakteristiky a zdravotní stav pouze nepřímo - omezením osob, které
-                                      mohou umírat s diagnostikovaným COVID-19 na určitou rizikovou skupinu. Uživatel si může porovnat výsledky pro omezení na různé rizikové skupiny.")
+                 strong("Aplikace přímo nezohledňuje osobní charakteritisky a zdravotní stav lidí, kteří v České republice zemřeli na COVID-19.
+                                      Taková data nemáme k dispozici. Aplikace zohledňuje osobní charakteristiky a zdravotní stav pouze
+                                      nepřímo - omezením osob, které
+                                      mohou umírat s diagnostikovaným COVID-19 na určitou rizikovou skupinu.")
                ),
-               p("Extrémní nastavení hodnoty vymezující rizikovou skupinu na 0 % je ekvivalentní narativu, že lidé umírají \"s COVIDem\". Naopak nastavení
-                                      na 100 % je extrémní poloha narativu, že lidé umírají výhradně \"na COVID\". Podrobný popis najdete v boxu \"O aplikaci\"."),
                p(
-                 strong("Aplikace nemá žádné \"správné\" ani \"doporučené\" nastavení.")
+                 strong("Aplikace tedy nemá žádné \"správné\" ani \"doporučené\" nastavení.")
                ),
                width = 12,
                title = "Upozornění",
@@ -249,7 +252,7 @@ ui <- dashboardPage(
              ),
              box(
                p(strong("Štěpán Mikula"), " Katedra ekonomie, ESF MUNI"),
-               p("Zpětnou vazbu k aplikaci a vizulizacím směřujte, prosím, na Štěpánův mail ",em("stepan.mikula@econ.muni.cz.")),
+               p("Zpětnou vazbu k aplikaci a vizulizacím směřujte na email ",em("stepan.mikula@econ.muni.cz.")),
                p(strong("Josef Montag"), " Katedra národního hospodářství, Právnická fakulta UK"),
                p("Zpětnou vazbu, kritiku, či návrhy na vylepšení výpočtů směřujte na email ", em("josef.montag@gmail.com.")),
                width = 12,
@@ -502,8 +505,8 @@ server <- function(input, output) {
         "Pohlaví a riziková skupina",
         values = c("#567f6d7d","#567f6dff","#ff851b7d","#ff851bff"),
         limits = c("Male_bn","Male_pn","Female_bn","Female_pn"),
-        labels = c("Muži, celá populace",str_c("Muži, nejrizikovějších ",input$risk_group," %"),
-                   "Ženy, celá populace",str_c("Ženy, nejrizikovějších ",input$risk_group," %")),
+        labels = c("Muži", "Muži, riziková skupina",
+                   "Ženy", "Ženy, riziková skupina"),
         guide = guide_legend(nrow=2,byrow=TRUE)
       ) +
       coord_flip() +
@@ -573,8 +576,8 @@ server <- function(input, output) {
         "Pohlaví a riziková skupina",
         values = c("#567f6d7d","#567f6dff","#ff851b7d","#ff851bff"),
         limits = c("Male-bn","Male-pn","Female-bn","Female-pn"),
-        labels = c("Muži, celá populace",str_c("Muži, nejrizikovějších ",input$risk_group," %"),
-                   "Ženy, celá populace",str_c("Ženy, nejrizikovějších ",input$risk_group," %")),
+        labels = c("Muži", "Muži, riziková skupina",
+                   "Ženy", "Ženy, riziková skupina"),
         guide = guide_legend(nrow=2,byrow=TRUE)
       ) +
       scale_x_date(
@@ -641,8 +644,8 @@ server <- function(input, output) {
         "Pohlaví a riziková skupina",
         values = c("#567f6d7d","#567f6dff","#ff851b7d","#ff851bff"),
         limits = c("Male-bn","Male-pn","Female-bn","Female-pn"),
-        labels = c("Muži, celá populace",str_c("Muži, nejrizikovějších ",input$risk_group," %"),
-                   "Ženy, celá populace",str_c("Ženy, nejrizikovějších ",input$risk_group," %")),
+        labels = c("Muži","Muži, riziková skupina",
+                   "Ženy","Ženy, riziková skupina"),
         guide = guide_legend(nrow=2,byrow=TRUE)
       ) +
       theme_bw(
@@ -757,8 +760,8 @@ server <- function(input, output) {
         "Pohlaví a riziková skupina",
         values = c("#567f6d7d","#567f6dff","#ff851b7d","#ff851bff"),
         limits = c("Male_population","Male_population.in.risk","Female_population","Female_population.in.risk"),
-        labels = c("Muži, ostatní","Muži v rizikové skupině",
-                   "Ženy, ostatní","Ženy v rizikové skupině"),
+        labels = c("Muži","Muži, riziková skupina",
+                   "Ženy","Ženy, riziková skupina"),
         guide = guide_legend(nrow=2,byrow=TRUE)
       ) +
       theme_bw(
