@@ -9,6 +9,8 @@ lost_years <- read_csv("https://raw.github.com/JosefMontag/years_lost_counter/ma
 uzis_data <- read_csv("https://raw.github.com/JosefMontag/years_lost_counter/main/Input_data/covid_cases_and_deaths.csv")
 
 uzis_data <- uzis_data %>%
+  drop_na(vek_kat) %>%
+  drop_na(pohlavi) %>%
   separate(vek_kat, c("died.at.age","agec2"), convert = TRUE, remove = FALSE) %>%
   mutate(
     died.at.age = floor(died.at.age + 2.5) %>% as.integer(),
