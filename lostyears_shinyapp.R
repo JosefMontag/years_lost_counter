@@ -344,7 +344,8 @@ server <- function(input, output) {
       ungroup() %>%
       select(gender,died.at.age,years.lost.by.risk.group) %>%
       left_join(uzis_data,., by = c("died.at.age", "gender"))  %>%
-      select(gender, died.at.age, years.lost.by.risk.group, death.date)
+      select(gender, died.at.age, years.lost.by.risk.group, death.date) %>%
+      drop_na()
   })
 
   get_benchmark_data <- reactive({
@@ -355,7 +356,8 @@ server <- function(input, output) {
       ungroup() %>%
       select(gender,died.at.age,years.lost.by.risk.group) %>%
       left_join(uzis_data,., by = c("died.at.age", "gender"))  %>%
-      select(gender, died.at.age, years.lost.by.risk.group, death.date)
+      select(gender, died.at.age, years.lost.by.risk.group, death.date) %>%
+      drop_na()
   })
 
   output$mean_total <- renderValueBox({
