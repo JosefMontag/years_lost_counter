@@ -658,6 +658,7 @@ server <- function(input, output) {
         name = "pn"
       ) %>%
       bind_rows(.,bn) %>%
+      filter(death.date > as.Date("2020-04-13")) %>%
       mutate(
         category = str_c(gender,"_",name)
       ) %>%
