@@ -272,7 +272,7 @@ ui <- dashboardPage(
              ),
              box(
                p(strong("Štěpán Mikula"), " Katedra ekonomie, ESF MUNI"),
-               p("Zpětnou vazbu k aplikaci a vizulizacím směřujte na email ",em("stepan.mikula@econ.muni.cz.")),
+               p("Zpětnou vazbu k aplikaci a vizualizacím směřujte na email ",em("stepan.mikula@econ.muni.cz.")),
                p(strong("Josef Montag"), " Katedra národního hospodářství, Právnická fakulta UK"),
                p("Zpětnou vazbu, kritiku, či návrhy na vylepšení výpočtů směřujte na email ", em("josef.montag@gmail.com.")),
                width = 12,
